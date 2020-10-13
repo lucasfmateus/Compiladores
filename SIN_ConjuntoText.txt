@@ -1,0 +1,10 @@
+CONST a = "str";
+
+SUB INT teste () IF a THEN b = c + d ; END-IF END-SUB
+
+SUB FLOAT teste2 () a = b ; END-SUB
+
+FUNCTION BOOL teste3 ( VAR INT A BY VALUE ) x = y ; END-FUNCTION
+
+
+

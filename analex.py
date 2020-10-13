@@ -49,18 +49,23 @@ class Analex:
             '%': 'OP_MOD',
             '!=': 'OP_NEQ',
             '&&': 'OP_AND',
-            '||': 'OP_OR'
+            '||': 'OP_OR',
+            '[': 'OP_CA',
+            ']': 'OP_CF',
+            '(': 'OP_PA',
+            ')': 'OP_PF'
         }
 
         separator = [' ', '\t', '\n', '\r', ';']
-        reserved = ["VAR", "MAIN", "END", "INT", "REAL", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION"  "VOID",
-                    "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT"]
+        reserved = [",", "VAR", "MAIN", "END", "INT", "FLOAT", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION",  "VOID",
+                    "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT"
+                    "REPEAT", "UNTILL"]
 
         while True:
             ch = self.next()
 
             if self.state == 1:
-                if ch in ['+', '-', '*', '/', '=', '<', '>', '!', '&', '|']:
+                if ch in ['+', '-', '*', '/', '=', '<', '>', '!', '&', '|', '[',']','(', ')']:
                     lexema += ch
                     self.state += 1
 
@@ -76,7 +81,7 @@ class Analex:
                     lexema += ch
                     self.state += 2
 
-                if ch.isalpha() or ch == '$' or ch == '_':
+                if ch.isalpha() or ch == '$' or ch == '_' or ch == ',':
                     lexema += ch
                     self.state += 4
 
