@@ -1,1 +1,40 @@
-1+2
+++
++=
++
+--
+-=
+-
+*
+/
+=
+==
+<
+<=
+>
+>=
+%
+!=
+&&
+||
+
+
++-
+=-
+
+999;
+999a;
+999 ;
+025.1
+11.653abc,
+99.99;
+
+INT a
+real a
+
+'a'
+'aaaa'
+
+"asoidfsdfaf assis  aisjdia     ijasidjaapapa"
+
+"asoidfsdfaf assis  aisjdia     ijasidj
+aapapa

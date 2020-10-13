@@ -1,84 +1,176 @@
 
 
-
 class Analex:
 
     def __init__(self, input_str):
         self.input = input_str
-        self.counter = -1 
-
+        self.counter = -1
+        self.state = None
 
     def previous(self):
         self.counter -= 1
 
-
     def next(self):
+        if self.counter == len(self.input) - 1:
+            return '\0'
+
         self.counter += 1
         return self.input[self.counter]
 
-
-    def execute(self):    
+    def execute(self):
+        result = []
+        print('state', '\t', 'token', '\t', 'lexeme')
         while True:
             token, lexema = self._execute()
-            print(token, '\t', lexema)
+            print(self.state, '\t', token, '\t', lexema)
+            result.append((token, lexema))
             if token == "FIM":
-                break
-        
+                return result
 
     def _execute(self):
-        state = 1
+        self.state = 1
         lexema = ''
 
         operators = {
-            '+': 'OP_SOM',
+            '++': 'OP_INC',
+            '+=': 'OP_MEQ',
+            '+': 'OP_SUM',
+            '--': 'OP_SNC',
+            '-=': 'OP_SEQ',
             '-': 'OP_SUB',
             '*': 'OP_MUL',
-            '/': 'OP_DIV'
+            '/': 'OP_DIV',
+            '=': 'OP_ATR',
+            '==': 'OP_EQ',
+            '<': 'OP_LES',
+            '<=': 'OP_LEQ',
+            '>': 'OP_GRT',
+            '>=': 'OP_GEQ',
+            '%': 'OP_MOD',
+            '!=': 'OP_NEQ',
+            '&&': 'OP_AND',
+            '||': 'OP_OR'
         }
+
+        separator = [' ', '\t', '\n', '\r', ';']
+        reserved = ["VAR", "MAIN", "END", "INT", "REAL", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION"  "VOID",
+                    "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT"]
 
         while True:
             ch = self.next()
 
-            if state == 1:
-                if ch.isdigit():
+            if self.state == 1:
+                if ch in ['+', '-', '*', '/', '=', '<', '>', '!', '&', '|']:
                     lexema += ch
-                    state += 1
-                
-                elif ch in operators:
-                    lexema += ch
-                    return operators[ch], lexema
+                    self.state += 1
 
-                elif ch == '\n':
+                if ch == '\0':
                     return 'FIM', None
 
-                elif ch in [' ', '\t']:
+                if ch in separator:
+                    if ch == ';':
+                        return 'PV', ch
                     pass
 
-                else:
-                    return 'ERRO', None
+                if ch.isdigit():
+                    lexema += ch
+                    self.state += 2
 
-            if state == 2:
-                ch = self.next() 
+                if ch.isalpha() or ch == '$' or ch == '_':
+                    lexema += ch
+                    self.state += 4
+
+                if ch == "'":
+                    lexema += ch
+                    self.state += 5
+
+                if ch == '"':
+                    lexema += ch
+                    self.state += 6                    
+
+            elif self.state == 2:
+
+                if lexema in ['+', '-', '>', '<', '=', '!'] and ch == '=':
+                    lexema += ch
+                    return operators[lexema], lexema
+
+                elif lexema in ['+', '-', '|', '&'] and lexema == ch:
+                    lexema += ch
+                    return operators[lexema], lexema
+
+                else:
+                    self.previous()
+                    return operators[lexema], lexema
+
+            elif self.state == 3:
 
                 while ch.isdigit():
-                    lexema += ch    
+                    lexema += ch
                     ch = self.next()
-                self.previous()
 
                 if ch == '.':
                     lexema += ch
-                    state += 1
-                    self.next()
-                else:
+                    self.state += 1
+
+                elif ch in separator:
+                    self.previous()
                     return 'INT', lexema
 
-            if state == 3:
-                ch = self.next() 
+                else:
+                    lexema += ch
+                    return 'ER1', f'{lexema} -> CARACTERE {ch} INVALIDO'
+
+            elif self.state == 4:
 
                 while ch.isdigit():
                     lexema += ch
                     ch = self.next()
-                self.previous()
 
-                return 'REAL', lexema
+                if ch in separator:
+                    self.previous()
+                    return 'FLOAT', lexema
+
+                else:
+                    lexema += ch
+                    return 'ER1', f'{lexema} -> CARACTERE {ch} INVALIDO'
+
+            elif self.state == 5:
+
+                while ch not in separator:
+                    lexema += ch
+                    ch = self.next()
+
+                self.previous()
+                if lexema.upper() in reserved:
+                    return 'RWORD', lexema.upper()
+                else:
+                    if False in list(map(lambda x: x.isdigit() or x.isalpha() or x == '$' or x == '_', lexema)):
+                        return 'ER2', lexema
+                    else:
+                        return 'ID', lexema
+
+            elif self.state == 6:
+                
+                while ch != "'":
+                    lexema += ch
+                    ch = self.next()
+
+                lexema += ch
+                if len(lexema) == 3:
+                    return 'CHAR', lexema
+                
+                else:
+                    return 'ER1', f'{lexema} -> CARACTERE INVALIDO'
+
+            elif self.state == 7:
+                
+                while ch != '"' and ch != '\n':
+                    lexema += ch
+                    ch = self.next()
+
+                if ch == '\n':
+                    return 'ER3', 'CARACTERE \\n NAO PERMITIDO EM STRINGS'
+            
+                lexema += ch
+                return 'STRING', lexema
 

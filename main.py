@@ -7,5 +7,5 @@ if __name__ == '__main__':
         input_str=open("conjuntoTeste.txt", 'r').read()
     )
 
-    a.execute()
+    tokens = a.execute()
 
