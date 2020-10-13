@@ -167,9 +167,10 @@ class Anasin:
         #                 | com-desvio | com-leitura | com-escrita | decl-var | decl-const
         print('lista_com')
         if self.get_current() in ['WHILE', 'DO', 'REPEAT', 'FOR', 'RETURN', 
-                                    'BREAK', 'CONTINUE', 'SCAN', 'SCANLN'
-                                    'PRINT', 'PRINTLN', 'IF', 'CONST', 'VAR'
+                                    'BREAK', 'CONTINUE', 'SCAN', 'SCANLN',
+                                    'PRINT', 'PRINTLN', 'IF', 'CONST', 'VAR',
                                     '('] or self.get_current_token() == 'ID':
+            
             self.comando()
             self.lista_com()
 
@@ -345,10 +346,9 @@ class Anasin:
     def lista_exp_linha(self):
         print('lista_exp_linha')
         #lista-exp' => , lista-exp | vazio
-        if self.get_current() == None:
-            return 
-        self.accept(',')
-        self.lista_exp()
+        if self.get_current() == ',':
+            self.accept(',')
+            self.lista_exp()
 
     def exp(self):
         print('exp')
@@ -424,7 +424,7 @@ class Anasin:
             elif self.get_current() == '(':
                 self.cham_func()
             
-        elif self.get_current_token() in ['INT', 'FLOAT', 'STRING'] or self.get_current() in ['TRUE', 'FALSE']:
+        elif self.get_current_token() in ['INT', 'FLOAT', 'STRING', 'CHAR'] or self.get_current() in ['TRUE', 'FALSE']:
             self.literal()
         
         elif self.get_current() in ['+', '-', 'NOT']:

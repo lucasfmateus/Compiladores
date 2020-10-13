@@ -1,12 +1,27 @@
-CONST a = "str";
 
-SUB INT teste () IF a THEN b = c + d ; END-IF END-SUB
+FUNCTION VOID main ( VAR INT argc BY VALUE, VAR CHAR argv BY REF )
+    VAR INT X, y, Z;
+    x = 1;
 
-SUB FLOAT teste2 () a = b ; END-SUB
+    FOR alfa = 1 TO 2 DO
+        var int y ;
+        y = Y + 1 ;    
+    NEXT
+    RETURN 0;
 
-FUNCTION BOOL teste3 ( VAR INT A BY VALUE ) x = y ; END-FUNCTION
+    IF a THEN  
+        b = c - d;
+    END-IF
 
-FUNCTION VOID main ()
-    VAR INT X = 1;
-    RETURN 0 ;
 END-FUNCTION
+
+
+sub void teste() 
+    print("hello world", 't', TRUE, FALSE, true, false);
+    println("hello world", 't', TRUE, FALSE, true, false);
+    scan(a, b, c, d, e);
+    scanl(a, b, c, d, e);
+end-sub
+
+
+

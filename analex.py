@@ -56,9 +56,9 @@ class Analex:
             ')': 'OP_PF'
         }
 
-        separator = [' ', '\t', '\n', '\r', ';', '\0']
+        separator = [' ', '\t', '\n', '\r', ';', '\0', ',', '(', ')']
         reserved = [",", "VAR", "END", "INT", "FLOAT", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION",  "VOID",
-                    "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT"
+                    "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT",
                     "REPEAT", "UNTILL"]
 
         while True:
