@@ -175,7 +175,8 @@ class Anasin:
 
     def comando(self):
         print('comando')
-
+        
+        print(self.get_current())
         if self.get_current_token() == 'ID':
             self.var_linha()
 

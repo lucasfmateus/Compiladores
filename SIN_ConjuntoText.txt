@@ -6,5 +6,7 @@ SUB FLOAT teste2 () a = b ; END-SUB
 
 FUNCTION BOOL teste3 ( VAR INT A BY VALUE ) x = y ; END-FUNCTION
 
-
-
+FUNCTION VOID main ()
+    VAR INT X = 1;
+    RETURN 0 ;
+END-FUNCTION

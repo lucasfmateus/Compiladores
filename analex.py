@@ -11,10 +11,10 @@ class Analex:
         self.counter -= 1
 
     def next(self):
-        if self.counter == len(self.input) - 1:
-            return '\0'
-
         self.counter += 1
+
+        if self.counter == len(self.input):
+            return '\0'
         return self.input[self.counter]
 
     def execute(self):
@@ -56,8 +56,8 @@ class Analex:
             ')': 'OP_PF'
         }
 
-        separator = [' ', '\t', '\n', '\r', ';']
-        reserved = [",", "VAR", "MAIN", "END", "INT", "FLOAT", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION",  "VOID",
+        separator = [' ', '\t', '\n', '\r', ';', '\0']
+        reserved = [",", "VAR", "END", "INT", "FLOAT", "CHAR", "SCAN", "SCANLN", "PRINT", "PRINTLN", "END-IF", "THEN", "ELSE", "DIV", "MOD", "END-SUB", "END-FUNCTION",  "VOID",
                     "BOOL", "STRING", "CONST", "REF", "BY", "SUB", "FUNCTION", "IF", "FOR", "WHILE", "DO", "RETURN", "BREAK", "CONTINUE", "GOTO", "TRUE", "FALSE", "VALUE", "LOOP", "NEXT"
                     "REPEAT", "UNTILL"]
 
