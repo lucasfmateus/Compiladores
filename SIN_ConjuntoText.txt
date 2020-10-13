@@ -13,10 +13,12 @@ FUNCTION VOID main ( VAR INT argc BY VALUE, VAR CHAR argv BY REF )
         b = c - d;
     END-IF
 
+    a = teste();
+
 END-FUNCTION
 
 
-sub void teste() 
+sub int teste() 
     print("hello world", 't', TRUE, FALSE, true, false);
     println("hello world", 't', TRUE, FALSE, true, false);
     scan(a, b, c, d, e);
