@@ -1,10 +1,11 @@
-from analex import Analex
-from anasin import Anasin
+from src.analex import Analex
+from src.anasin import Anasin
+
 
 if __name__ == '__main__':
 
     a = Analex(
-        input_str=open("SIN_ConjuntoText.txt", 'r').read()
+        input_str=open("docs/SIN_ConjuntoText.txt", 'r').read()
     )
 
     tokens = a.execute()
@@ -12,10 +13,6 @@ if __name__ == '__main__':
     b = Anasin(
         tokens=tokens
     )
-
-    print()
-    print()
-    print()
 
     b.execute()
 

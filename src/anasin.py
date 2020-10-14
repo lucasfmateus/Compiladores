@@ -5,7 +5,7 @@ class Anasin:
     def __init__(self, tokens):
         self.tokens = tokens
         self.counter = 0
-        self.output = open('anasin.log.csv', 'w')
+        self.output = open('docs/anasin.log.csv', 'w')
         self.output.write('token,lexema,log\n')
 
     def next(self):

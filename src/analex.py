@@ -6,7 +6,7 @@ class Analex:
         self.input = input_str
         self.counter = -1
         self.state = None
-        self.output = open('analex.log.csv', 'w')
+        self.output = open('docs/analex.log.csv', 'w')
         self.output.write('state,token,lexeme\n')
 
     def previous(self):
