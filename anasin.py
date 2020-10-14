@@ -5,6 +5,8 @@ class Anasin:
     def __init__(self, tokens):
         self.tokens = tokens
         self.counter = 0
+        self.output = open('anasin.log.csv', 'w')
+        self.output.write('token,lexema,log\n')
 
     def next(self):
         n = self.tokens[self.counter]
@@ -19,6 +21,10 @@ class Anasin:
         """ return token """
         return self.tokens[self.counter][0]
 
+    def log(self, token='', lexema='', log=''):
+        self.output.write(f"{token},{lexema},{log}\n")
+        print("{:10}".format(token), "{:10}".format(lexema), "{:10}".format(log))
+
     def accept(self, expected, mode=None):
         """ check if a lexema or token is as expected
         
@@ -30,11 +36,11 @@ class Anasin:
         #print(expected, '\t', self.get_current_token(), '\t', self.get_current(), '\t', mode)
 
         if type(expected) == type([]) and mode() in expected:            
-            print(f"{self.get_current_token()} {self.get_current()} ok!")
+            self.log(token=self.get_current_token(), lexema= self.get_current(), log ='ok!')
             self.next()
 
         elif expected == mode():
-            print(f"{self.get_current_token()} {self.get_current()} ok!")
+            self.log(token=self.get_current_token(), lexema= self.get_current(), log ='ok!')
             self.next()
 
         else:
@@ -45,6 +51,8 @@ class Anasin:
         self.accept(expected, self.get_current_token)
 
     def execute(self):
+        print("{:10}".format('token'), "{:10}".format("lexema"), "{:10}".format("log"))
+
         while self.counter < len(self.tokens):
             self.programa()
 
@@ -52,11 +60,11 @@ class Anasin:
     # requisito do trabalho    
     #         
     def programa(self):
-        print('programa')
+        self.log(log ='programa')
         self.lista_decl()
 
     def lista_decl(self):
-        print('lista_decl')
+        self.log(log ='lista_decl')
         #lista-decl => decl list-decl | vazio
 
         if self.get_current() in ['CONST', 'VAR', 'SUB', 'FUNCTION']:
@@ -67,7 +75,7 @@ class Anasin:
 
 
     def decl(self):
-        print('decl')
+        self.log(log ='decl')
 
         if self.get_current() == 'CONST':
             self.decl_const()
@@ -79,7 +87,8 @@ class Anasin:
             self.decl_var()
 
     def decl_const(self):
-        print('decl_const')
+        self.log(log ='decl_const')
+
         # decl-const => CONST ID = literal ;
         self.accept('CONST')
         self.accept_token('ID')
@@ -88,7 +97,8 @@ class Anasin:
         self.accept_token('PV')
 
     def decl_var(self):
-        print('decl_var')
+        self.log(log ='decl_var')
+
         # decl-var => VAR espec-tipo lista-var ;
         self.accept('VAR')
         self.espec_tipo()
@@ -96,12 +106,14 @@ class Anasin:
         self.accept_token('PV')
 
     def espec_tipo(self):
-        print('espec_tipo')
+        self.log(log ='espec_tipo')
+
         # espec-tipo => INT | FLOAT | CHAR | BOOL | STRING
         self.accept(['INT', 'FLOAT', 'CHAR', 'BOOL', 'STRING', 'VOID'])
 
     def decl_sub(self):
-        print('decl_sub')
+        self.log(log ='decl_sub')
+
         # decl-proc => SUB espec-tipo ID ( params ) bloco END-SUB 
         self.accept('SUB')
         self.espec_tipo()
@@ -113,7 +125,8 @@ class Anasin:
         self.accept('END-SUB')
 
     def decl_func(self):
-        print('decl_func')
+        self.log(log ='dcle_func')
+
         #decl-func => FUNCTION espec-tipo ID ( params ) bloco END-FUNCTION
         self.accept('FUNCTION')
         self.espec_tipo()
@@ -125,27 +138,31 @@ class Anasin:
         self.accept('END-FUNCTION')
 
     def params(self):
-        print('params')
+        self.log(log='params')
+
         #params => lista-param | vazio
         if self.get_current() in [None, ')'] :
             return
         self.lista_param()
     
     def lista_param(self):
-        print('lista_param')
+        self.log(log ='lista_param')
+
         # lista-param => param lista-param'
         self.param()
         self.lista_param_linha()
     
     def lista_param_linha(self):
-        print('lista_param_linha')
+        self.log(log ='lista_param_linha')
+
         #lista-param' => , param | vazio
         if self.get_current() == ',':
             self.accept(',')
             self.param()
         
     def param(self):
-        print('param')
+        self.log(log ='param')
+
         #param => VAR espec-tipo lista-var BY mode
         self.accept('VAR')
         self.espec_tipo()
@@ -154,18 +171,20 @@ class Anasin:
         self.mode()
 
     def mode(self):
-        print('mode')
+        self.log(log ='mode')
+
         #mode => VALUE | REF
         self.accept(["VALUE", "REF"])
 
     def bloco(self):
-        print('bloco')
+        self.log(log ='bloco')
         self.lista_com()
 
     def lista_com(self):
         # comando => cham-proc | com-atrib | com-selecao | com-repeticao 
         #                 | com-desvio | com-leitura | com-escrita | decl-var | decl-const
-        print('lista_com')
+        self.log(log ='lista_com')
+
         if self.get_current() in ['WHILE', 'DO', 'REPEAT', 'FOR', 'RETURN', 
                                     'BREAK', 'CONTINUE', 'SCAN', 'SCANLN',
                                     'PRINT', 'PRINTLN', 'IF', 'CONST', 'VAR',
@@ -175,9 +194,8 @@ class Anasin:
             self.lista_com()
 
     def comando(self):
-        print('comando')
+        self.log(log ='comando')
         
-        print(self.get_current())
         if self.get_current_token() == 'ID':
             self.var_linha()
 
@@ -211,12 +229,13 @@ class Anasin:
         #    
 
     def var_linha(self):
-        print('var_linha')
+        self.log(log ='var_linha')
+
         self.accept_token('ID')
         self.var()
 
     def var(self):
-        print('var')
+        self.log(log ='var')
         if self.get_current() == '[':
             self.accept('[')
             self.exp_soma()
@@ -224,25 +243,24 @@ class Anasin:
             
 
     def cham_proc(self):
-        print('cham_proc')
+        self.log(log ='cham_proc')
         self.cham_func()
         self.accept_token('PV')
 
     def cham_func(self):
-        print('cham_func')
+        self.log(log ='cham_func')
         self.accept('(')
         self.args()
         self.accept(')')
 
     def com_atrib(self):
-        print('com_atrib')
-        # self.accept('VAR')
+        self.log(log ='com_atrib')
         self.accept_token('OP_ATR')
         self.exp()
         self.accept_token('PV')
 
     def com_selecao(self):
-        print('com_selecao')
+        self.log(log ='com_selecao')
         self.accept('IF')
         self.exp()
         self.accept('THEN')
@@ -250,7 +268,7 @@ class Anasin:
         self.com_selecao_linha()
 
     def com_selecao_linha(self):
-        print('com_selecao_linha')
+        self.log(log ='com_selecao_linha')
 
         if self.get_current() == 'END-IF':
             self.accept('END-IF')
@@ -260,7 +278,8 @@ class Anasin:
             self.accept('END-IF')
 
     def com_repeticao(self):
-        print('com_repeticao')
+        self.log(log ='com_repeticao')
+
         # com-repeticao => WHILE exp DO bloco LOOP | DO bloco WHILE exp ; | REPEAT bloco UNTIL exp ; | FOR ID = exp-soma TO exp-soma DO bloco NEXT
         if self.get_current() == 'WHILE':
             self.accept('WHILE')
@@ -296,7 +315,8 @@ class Anasin:
             self.accept('NEXT')
             
     def com_desvio(self):
-        print('com_desvio')
+        self.log(log ='com_desvio')
+
         if self.get_current() == 'RETURN':
             self.accept('RETURN')
             self.exp()
@@ -311,7 +331,8 @@ class Anasin:
             self.accept_token('PV')
             
     def com_leitura(self):
-        print('com_leitura')
+        self.log(log ='com_leitura')
+
         if self.get_current() == 'SCAN':
             self.accept('SCAN')
 
@@ -324,7 +345,8 @@ class Anasin:
         self.accept_token('PV')
             
     def com_escrita(self):
-        print('com_escrita')
+        self.log(log ='com_escrita')
+
         if self.get_current() == 'PRINT':
             self.accept('PRINT')
 
@@ -338,62 +360,63 @@ class Anasin:
         
 
     def lista_exp(self):
-        print('lista_exp')
+        self.log(log ='lista_exp')
         #lista-exp => exp lista-exp'
         self.exp()
         self.lista_exp_linha()
 
     def lista_exp_linha(self):
-        print('lista_exp_linha')
+        self.log(log ='lista_exp_linha')
+
         #lista-exp' => , lista-exp | vazio
         if self.get_current() == ',':
             self.accept(',')
             self.lista_exp()
 
     def exp(self):
-        print('exp')
+        self.log(log ='exp')
         # exp => exp-soma exp'
         self.exp_soma()
         self.exp_linha()
     
     def exp_linha(self):
-        print('exp_linha')
+        self.log(log ='exp_linha')
         # exp' => op-relac exp-soma | vazio
         if self.get_current() in ['<=', '<', '>', '>=', '==', '<>']:
             self.op_relac()
             self.exp_soma()
 
     def op_relac(self):
-        print('op_relac')
+        self.log(log ='op_relac')
         # op-relac => <= | < | > | >= | == | <>
         self.accept(['<=', '<', '>', '>=', '==', '<>'])
 
     def exp_soma(self):
-        print('exp_soma')
+        self.log(log ='exp_soma')
         # exp-soma => exp-mult exp-soma'
         self.exp_mult()
         self.exp_soma_linha()
 
     def exp_soma_linha(self):
-        print('exp_soma_linha')
+        self.log(log ='exp_soma_linha')
         #exp-soma' => op-soma exp-soma | vazio
         if self.get_current_token() in ['OP_SUM', 'OP_SUB', 'OP_OR']:
             self.op_soma()
             self.exp_soma()
 
     def op_soma(self):
-        print('op_soma')
+        self.log(log ='op_soma')
         # op-soma => + | - | OR
         self.accept_token(['OP_SUM', 'OP_SUB', 'OP_OR'])
 
     def exp_mult(self):
-        print('exp_mult')
+        self.log(log ='exp_mult')
         # exp-mult => exp-simples exp-mult'
         self.exp_simples()
         self.exp_mult_linha()
 
     def exp_mult_linha(self):
-        print('exp_mult_linha')
+        self.log(log ='exp_mult_linha')
         #exp-mult' => op-mult exp-simples exp-mult' | vazio
         if self.get_current_token() in ['OP_MULT', 'OP_DIV', 'OP_AND'] or self.get_current() in ['MOD', 'DIV', 'AND']:
             self.op_mult()
@@ -401,7 +424,7 @@ class Anasin:
             self.exp_mult_linha()
 
     def op_mult(self):
-        print('op_mult')
+        self.log(log ='op_mult')
         #op-mult => * | / | DIV | MOD | AND
 
         if self.get_current_token() in ['OP_MULT', 'OP_DIV', 'OP_AND']:
@@ -410,7 +433,7 @@ class Anasin:
         self.accept(['MOD', 'DIV', 'AND'])
 
     def exp_simples(self):
-        print('exp_simples')
+        self.log(log ='exp_simples')
         # exp-simples => ( exp ) | var | cham-func | literal | op-unario exp
         
         if self.get_current() == '(':
@@ -432,7 +455,7 @@ class Anasin:
             self.exp()
 
     def literal(self):
-        print('literal')
+        self.log(log ='literal')
         # literal => NUMINT | NUMREAL | CARACTERE | STRING | valor-verdade
 
         if self.get_current_token() in ['INT', 'FLOAT', 'CHAR', 'STRING']:
@@ -441,11 +464,11 @@ class Anasin:
             self.valor_verdade()
 
     def valor_verdade(self):
-        print('valor_Verdade')
+        self.log(log ='valor_verdade')
         self.accept(['TRUE', 'FALSE'])
 
     def args(self):
-        print('args')
+        self.log(log ='args')
         #args => lista-exp | vazio
         if self.get_current() == None:
             return
@@ -453,7 +476,7 @@ class Anasin:
         self.lista_exp()
 
     def lista_var(self):
-        print('lista_var')
+        self.log(log ='lista_var')
         #lista-var => var lista-var'
 
         if self.get_current_token() == 'ID':
@@ -461,14 +484,14 @@ class Anasin:
             self.lista_var_linha()
 
     def lista_var_linha(self):
-        print('lista_var_linha')
+        self.log(log ='lista_var_linha')
         #lista-var' => , lista-var | vazio
         if self.get_current() == ',':
             self.accept(',')
             self.lista_var()
 
     def op_unario(self):
-        print('op_unario')
+        self.log(log ='op_unario')
         #op-unario => + | - | NOT
         if self.get_current_token() in ['OP_INC', 'OP_SNC']:
             self.accept_token(['OP_INC', 'OP_SNC'])

@@ -6,6 +6,8 @@ class Analex:
         self.input = input_str
         self.counter = -1
         self.state = None
+        self.output = open('analex.log.csv', 'w')
+        self.output.write('state,token,lexeme\n')
 
     def previous(self):
         self.counter -= 1
@@ -19,10 +21,19 @@ class Analex:
 
     def execute(self):
         result = []
-        print('state', '\t', 'token', '\t', 'lexeme')
+        print("{:10}\t{:10}\t{:10}".format("state",'token','lexema'))
+
         while True:
             token, lexema = self._execute()
-            print(self.state, '\t', token, '\t', lexema)
+
+            # logs
+            if lexema is not None:
+                print("{:10}\t{:10}\t{:10}".format(self.state,token,lexema))
+            else:
+                print("{:10}\t{:10}\t{:10}".format(self.state,token,"None"))
+                
+            self.output.write(f"{self.state},{token},{lexema}\n")                
+
             result.append((token, lexema))
             if token == "FIM":
                 return result
