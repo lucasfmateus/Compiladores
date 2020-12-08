@@ -11,23 +11,41 @@ class Anasin:
         self.output.write('token,lexema,log\n')
         self.symbol_table = SymbolTable()
         self.last_type = None
-        self.last_context = None
+        self.last_context = 'global'
+        self.last_context_aux = 'global'
         self.last_data_type = None
         self.last_operation = None
-        self.last_func_sub_id = ''
+        self.stack = {}
 
     def add_symbol(self):
         """Add symbol to Symbol Table.
 
         Always call it after accept functions"""
+        id = self.tokens[self.counter - 1][1]
 
         s = Symbol(
-            id = self.tokens[self.counter - 1][1],
+            id = id,
             type = self.last_type,
-            context = f"{self.last_func_sub_id + '_' if self.last_func_sub_id != '' else 'global_'}{self.last_context}",
+            context = self.last_context,
             data_type = self.last_data_type
         )
         self.symbol_table.add(symbol=s)       
+
+        if self.last_type in ['VAR','SUB','FUNC']:
+            try:
+                self.stack[self.last_context_aux].append(id)
+            except KeyError:
+                self.stack[self.last_context_aux] = [id]
+    
+    def remove_symbols(self,when=''):        
+        if self.last_context_aux in self.stack:
+            for i in self.stack[self.last_context_aux]:
+                self.symbol_table.remove(id=i,context=self.last_context,when=when)
+
+            del self.stack[self.last_context_aux]
+
+    def get_aux_context(self):
+        return  f"{self.last_context}-{self.last_operation}"
 
     def next(self):
         n = self.tokens[self.counter]
@@ -88,7 +106,7 @@ class Anasin:
     #         
     def programa(self):
         self.log(log ='programa')
-        self.last_context = 0   #semantic-action
+        self.last_context = 'global'   #semantic-action
         self.lista_decl()
         
 
@@ -99,7 +117,8 @@ class Anasin:
         if self.get_current() in ['CONST', 'VAR', 'SUB', 'FUNCTION']:
             self.decl()
 
-        if self.get_current() == None:
+        if self.get_current() == None:            
+            self.remove_symbols('fim')
             print("Tabela de simbolos")
             print(self.symbol_table.export())            
             exit()
@@ -156,8 +175,8 @@ class Anasin:
 
     def decl_sub(self):
         self.log(log ='decl_sub')
-        self.last_context += 1 #semantic-action
-        last = self.last_type #semantic-action
+        last_context = self.last_context
+        last_type = self.last_type #semantic-action
         self.last_type = 'SUB' #semantic-action
 
         # decl-proc => SUB espec-tipo ID ( params ) bloco END-SUB 
@@ -165,42 +184,48 @@ class Anasin:
         self.espec_tipo()
         self.accept_token('ID')
         self.add_symbol()
-        self.last_func_sub_id = self.tokens[self.counter - 1][1] #semantic-action
+        self.last_context = self.tokens[self.counter - 1][1] #semantic-action
+        self.last_context_aux = self.get_aux_context() #semantic-action
         self.accept('(')
         self.params()
         self.accept(')')
         self.bloco()
         self.accept('END-SUB')
 
-        self.last_context -= 1 #semantic-action
-        self.last_func_sub_id = '' #semantic-action
-        self.last_type = last #semantic-action
+        self.remove_symbols('end-sub') #semantic-action
+        self.last_context = last_context #semantic-action
+        self.last_context_aux = last_context #semantic-action
+        self.last_func_sub_id = '' #semantic-action        
+        self.last_type = last_type #semantic-action
 
     def decl_func(self):
         self.log(log ='decl_func')
-        self.last_context += 1 #semantic-action
-        last = self.last_type #semantic-action
+        last_context = self.last_context #semantic-action
+        last_type = self.last_type #semantic-action
         self.last_type = 'FUNC' #semantic-action
 
         #decl-func => FUNCTION espec-tipo ID ( params ) bloco END-FUNCTION
         self.accept('FUNCTION')
         self.espec_tipo()
         self.accept_token('ID')
-        self.add_symbol()
-        self.last_func_sub_id = self.tokens[self.counter - 1][1] #semantic-action
+        self.add_symbol()   #semantic-action
+        self.last_context = self.tokens[self.counter - 1][1] #semantic-action
+        self.last_context_aux = self.get_aux_context() #semantic-action
         self.accept('(')
         self.params() 
         self.accept(')')
         self.bloco()
         self.accept('END-FUNCTION')
         
+        
         self.last_func_sub_id = '' #semantic-action
-        self.last_context -= 1 #semantic-action
-        self.last_type = last #semantic-action        
+        self.last_context = last_context #semantic-action
+        self.last_context_aux = last_context #semantic-action
+        self.last_type = last_type #semantic-action                
 
     def params(self):
         self.log(log='params')
-
+        
         #params => lista-param | vazio
         if self.get_current() in [None, ')'] :
             return
@@ -223,13 +248,17 @@ class Anasin:
         
     def param(self):
         self.log(log ='param')
+        last = self.last_type #semantic-action
+        self.last_type = 'VAR' #semantic-action
 
         #param => VAR espec-tipo lista-var BY mode
+
         self.accept('VAR')
         self.espec_tipo()
         self.lista_var()
         self.accept("BY")
         self.mode()
+        self.last_type = last #semantic-action
 
     def mode(self):
         self.log(log ='mode')
@@ -238,8 +267,14 @@ class Anasin:
         self.accept(["VALUE", "REF"])
 
     def bloco(self):
+        last = self.last_context_aux    #semantic-action
+        self.last_context_aux = self.get_aux_context() #semantic-action
         self.log(log ='bloco')
         self.lista_com()
+
+        self.remove_symbols(f'fim {self.last_context_aux}')
+        self.last_context_aux = last #semantic-action
+
 
     def lista_com(self):
         # comando => cham-proc | com-atrib | com-selecao | com-repeticao 
@@ -302,7 +337,10 @@ class Anasin:
         if self.last_operation == 'decl': 
             self.add_symbol()
         else:
-            self.symbol_table.use(self.tokens[self.counter - 1][1])
+            self.symbol_table.use(
+                id=self.tokens[self.counter - 1][1],
+                context=self.last_context
+            )
 
         self.var()
 
@@ -339,13 +377,11 @@ class Anasin:
         self.accept('IF')
         self.exp()
         self.accept('THEN')
-        self.last_context += 1       #semantic-action
         last = self.last_operation   #semantic-action
         self.last_operation = 'cond' #semantic-action        
         self.bloco()
         self.com_selecao_linha()
         self.last_operation = last #semantic-action
-        self.last_context -= 1     #semantic-action        
 
     def com_selecao_linha(self):
         self.log(log ='com_selecao_linha')
@@ -363,14 +399,12 @@ class Anasin:
         # com-repeticao => WHILE exp DO bloco LOOP | DO bloco WHILE exp ; | REPEAT bloco UNTIL exp ; | FOR ID = exp-soma TO exp-soma DO bloco NEXT
         if self.get_current() == 'WHILE':
             self.accept('WHILE')
-            self.last_context += 1        #semantic-action
             last = self.last_operation    #semantic-action
             self.last_operation = 'while' #semantic-action
             self.exp()
             self.accept('DO')
             self.bloco()
             self.accept('LOOP')
-            self.last_context -= 1       #semantic-action
             self.last_operation = last   #semantic-action
 
         elif self.get_current() == 'DO':
@@ -379,28 +413,23 @@ class Anasin:
             self.bloco()
             self.accept('WHILE')
             last = self.last_operation    #semantic-action
-            self.last_context += 1        #semantic-action
             self.last_operation = 'while' #semantic-action
             self.exp()
             self.accept_token('PV')
-            self.last_context -= 1        #semantic-action
             self.last_operation = last    #semantic-action
         
         elif self.get_current() == 'REPEAT':
             self.accept('REPEAT')
             self.bloco()
             self.accept('UNTIL')
-            self.last_context += 1         #semantic-action
             last = self.last_operation     #semantic-action
             self.last_operation = 'repeat' #semantic-action            
             self.exp()
             self.accept_token('PV')
-            self.last_context -= 1          #semantic-action
             self.last_operation = last      #semantic-action
         
         elif self.get_current() == 'FOR':
             self.accept('FOR')
-            self.last_context += 1         #semantic-action
             last = self.last_operation     #semantic-action
             self.last_operation = 'for'    #semantic-action             
             self.accept_token('ID')
@@ -411,7 +440,6 @@ class Anasin:
             self.accept('DO')
             self.bloco()
             self.accept('NEXT')
-            self.last_context -= 1          #semantic-action
             self.last_operation = last      #semantic-action
             
     def com_desvio(self):
@@ -547,7 +575,9 @@ class Anasin:
         
         elif self.get_current_token() == 'ID':
             self.accept_token('ID')
-            self.symbol_table.use(self.tokens[self.counter -1][1]) #semantic-action
+            self.symbol_table.use(
+                id=self.tokens[self.counter -1][1],
+                context=self.last_context) #semantic-action
 
             if self.get_current() == '[':
                 self.var()

@@ -1,0 +1,9 @@
+
+var float a;
+
+sub void main()
+    var int b;
+    var float c;
+
+    a = 5;
+end-sub

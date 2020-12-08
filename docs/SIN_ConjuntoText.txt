@@ -1,15 +1,28 @@
 
+
+sub int teste() 
+    var int a, b, c, d, e;
+    
+    print("hello world", 't', TRUE, FALSE, true, false);
+    println("hello world", 't', TRUE, FALSE, true, false);
+    scan(a, b, c, d, e);
+    scanln(a, b, c, d, e);
+end-sub
+
+
+
 FUNCTION VOID main ( VAR INT argc BY VALUE, VAR CHAR argv BY REF )
-    VAR INT X, y, Z;
+    VAR INT x, X, Y, Z, a, c, d;
     x = 1;
 
     FOR alfa = 1 TO 2 DO
-        var int y ;
+        VAR INT y ;
         y = Y + 1 ;    
     NEXT
     RETURN 0;
 
     IF a THEN  
+        var float b;
         b = c - d;
     END-IF
 
@@ -18,12 +31,6 @@ FUNCTION VOID main ( VAR INT argc BY VALUE, VAR CHAR argv BY REF )
 END-FUNCTION
 
 
-sub int teste() 
-    print("hello world", 't', TRUE, FALSE, true, false);
-    println("hello world", 't', TRUE, FALSE, true, false);
-    scan(a, b, c, d, e);
-    scanl(a, b, c, d, e);
-end-sub
 
 
 
