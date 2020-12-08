@@ -1,4 +1,6 @@
 
+from src.tabsim import Symbol, SymbolTable
+
 
 class Anasin:
 
@@ -7,6 +9,25 @@ class Anasin:
         self.counter = 0
         self.output = open('docs/anasin.log.csv', 'w')
         self.output.write('token,lexema,log\n')
+        self.symbol_table = SymbolTable()
+        self.last_type = None
+        self.last_context = None
+        self.last_data_type = None
+        self.last_operation = None
+        self.last_func_sub_id = ''
+
+    def add_symbol(self):
+        """Add symbol to Symbol Table.
+
+        Always call it after accept functions"""
+
+        s = Symbol(
+            id = self.tokens[self.counter - 1][1],
+            type = self.last_type,
+            context = f"{self.last_func_sub_id + '_' if self.last_func_sub_id != '' else 'global_'}{self.last_context}",
+            data_type = self.last_data_type
+        )
+        self.symbol_table.add(symbol=s)       
 
     def next(self):
         n = self.tokens[self.counter]
@@ -31,17 +52,24 @@ class Anasin:
         params:
         expected - str | list<str>
         mode     - None | self.get_current | self.get_current_token
+
+        return:
+        LEXEMMA if mode is None or `self.get_current`. Otherwise, TOKEN.
         """
         mode = self.get_current if mode == None else mode
         #print(expected, '\t', self.get_current_token(), '\t', self.get_current(), '\t', mode)
 
-        if type(expected) == type([]) and mode() in expected:            
+        if type(expected) == type([]) and mode() in expected:   
+            cur = mode()         
             self.log(token=self.get_current_token(), lexema= self.get_current(), log ='ok!')
             self.next()
+            return cur
 
         elif expected == mode():
+            cur = mode() 
             self.log(token=self.get_current_token(), lexema= self.get_current(), log ='ok!')
             self.next()
+            return cur
 
         else:
             print(f"{self.get_current_token()} {self.get_current()} nao ok :(")
@@ -51,7 +79,6 @@ class Anasin:
         self.accept(expected, self.get_current_token)
 
     def execute(self):
-        print("{:10}".format('token'), "{:10}".format("lexema"), "{:10}".format("log"))
 
         while self.counter < len(self.tokens):
             self.programa()
@@ -61,7 +88,9 @@ class Anasin:
     #         
     def programa(self):
         self.log(log ='programa')
+        self.last_context = 0   #semantic-action
         self.lista_decl()
+        
 
     def lista_decl(self):
         self.log(log ='lista_decl')
@@ -71,11 +100,14 @@ class Anasin:
             self.decl()
 
         if self.get_current() == None:
+            print("Tabela de simbolos")
+            print(self.symbol_table.export())            
             exit()
 
 
     def decl(self):
         self.log(log ='decl')
+        self.last_operation = 'decl'
 
         if self.get_current() == 'CONST':
             self.decl_const()
@@ -83,59 +115,88 @@ class Anasin:
             self.decl_func()
         elif self.get_current() == 'SUB':        
             self.decl_sub()
-        elif self.get_current() == 'VAR':        
+        elif self.get_current() == 'VAR':       
             self.decl_var()
+
+        self.last_operation = None
 
     def decl_const(self):
         self.log(log ='decl_const')
+        last = self.last_type   #semantic-action
+        self.last_type = 'CONST' #semantic-action
 
         # decl-const => CONST ID = literal ;
+
         self.accept('CONST')
         self.accept_token('ID')
+        self.add_symbol()   #semantic-action
         self.accept_token('OP_ATR')
         self.literal()
         self.accept_token('PV')
+        self.last_type = last #semantic-action
 
     def decl_var(self):
         self.log(log ='decl_var')
 
         # decl-var => VAR espec-tipo lista-var ;
         self.accept('VAR')
+        last = self.last_type #semantic-action
+        self.last_type = 'VAR'#semantic-action
         self.espec_tipo()
         self.lista_var()
         self.accept_token('PV')
+        self.last_type =last #semantic-action
 
     def espec_tipo(self):
         self.log(log ='espec_tipo')
 
         # espec-tipo => INT | FLOAT | CHAR | BOOL | STRING
-        self.accept(['INT', 'FLOAT', 'CHAR', 'BOOL', 'STRING', 'VOID'])
+        tipo = self.accept(['INT', 'FLOAT', 'CHAR', 'BOOL', 'STRING', 'VOID'])
+        self.last_data_type = tipo
 
     def decl_sub(self):
         self.log(log ='decl_sub')
+        self.last_context += 1 #semantic-action
+        last = self.last_type #semantic-action
+        self.last_type = 'SUB' #semantic-action
 
         # decl-proc => SUB espec-tipo ID ( params ) bloco END-SUB 
         self.accept('SUB')
         self.espec_tipo()
         self.accept_token('ID')
+        self.add_symbol()
+        self.last_func_sub_id = self.tokens[self.counter - 1][1] #semantic-action
         self.accept('(')
         self.params()
         self.accept(')')
         self.bloco()
         self.accept('END-SUB')
 
+        self.last_context -= 1 #semantic-action
+        self.last_func_sub_id = '' #semantic-action
+        self.last_type = last #semantic-action
+
     def decl_func(self):
-        self.log(log ='dcle_func')
+        self.log(log ='decl_func')
+        self.last_context += 1 #semantic-action
+        last = self.last_type #semantic-action
+        self.last_type = 'FUNC' #semantic-action
 
         #decl-func => FUNCTION espec-tipo ID ( params ) bloco END-FUNCTION
         self.accept('FUNCTION')
         self.espec_tipo()
         self.accept_token('ID')
+        self.add_symbol()
+        self.last_func_sub_id = self.tokens[self.counter - 1][1] #semantic-action
         self.accept('(')
-        self.params()
+        self.params() 
         self.accept(')')
         self.bloco()
         self.accept('END-FUNCTION')
+        
+        self.last_func_sub_id = '' #semantic-action
+        self.last_context -= 1 #semantic-action
+        self.last_type = last #semantic-action        
 
     def params(self):
         self.log(log='params')
@@ -197,7 +258,10 @@ class Anasin:
         self.log(log ='comando')
         
         if self.get_current_token() == 'ID':
+            last = self.last_operation #semantic-action
+            self.last_operation = 'attrib' #semantic-action
             self.var_linha()
+            self.last_operation = last #semantic-action
 
             if self.get_current() == '(':  
                 self.cham_proc()
@@ -207,7 +271,10 @@ class Anasin:
                 self.com_atrib()
 
         if self.get_current() == 'VAR':
+            last = self.last_operation #semantic-action
+            self.last_operation = 'decl' #semantic-action            
             self.decl_var()
+            self.last_operation = last #semantic-action            
 
         if self.get_current() == 'CONST':
             self.decl_const()
@@ -226,12 +293,17 @@ class Anasin:
 
         if self.get_current() in ['PRINT', 'PRINTLN']:
             self.com_escrita()
-        #    
+        
 
     def var_linha(self):
         self.log(log ='var_linha')
+        self.accept_token('ID')   #semantic-action
+        
+        if self.last_operation == 'decl': 
+            self.add_symbol()
+        else:
+            self.symbol_table.use(self.tokens[self.counter - 1][1])
 
-        self.accept_token('ID')
         self.var()
 
     def var(self):
@@ -256,16 +328,24 @@ class Anasin:
     def com_atrib(self):
         self.log(log ='com_atrib')
         self.accept_token('OP_ATR')
+        last = self.last_operation      #semantic-action
+        self.last_operation = 'attrib'  #semantic-action
         self.exp()
         self.accept_token('PV')
+        self.last_operation = last      #semantic-action
 
     def com_selecao(self):
         self.log(log ='com_selecao')
         self.accept('IF')
         self.exp()
         self.accept('THEN')
+        self.last_context += 1       #semantic-action
+        last = self.last_operation   #semantic-action
+        self.last_operation = 'cond' #semantic-action        
         self.bloco()
         self.com_selecao_linha()
+        self.last_operation = last #semantic-action
+        self.last_context -= 1     #semantic-action        
 
     def com_selecao_linha(self):
         self.log(log ='com_selecao_linha')
@@ -283,28 +363,46 @@ class Anasin:
         # com-repeticao => WHILE exp DO bloco LOOP | DO bloco WHILE exp ; | REPEAT bloco UNTIL exp ; | FOR ID = exp-soma TO exp-soma DO bloco NEXT
         if self.get_current() == 'WHILE':
             self.accept('WHILE')
+            self.last_context += 1        #semantic-action
+            last = self.last_operation    #semantic-action
+            self.last_operation = 'while' #semantic-action
             self.exp()
             self.accept('DO')
             self.bloco()
             self.accept('LOOP')
+            self.last_context -= 1       #semantic-action
+            self.last_operation = last   #semantic-action
 
         elif self.get_current() == 'DO':
             
             self.accept('DO')
             self.bloco()
             self.accept('WHILE')
+            last = self.last_operation    #semantic-action
+            self.last_context += 1        #semantic-action
+            self.last_operation = 'while' #semantic-action
             self.exp()
             self.accept_token('PV')
+            self.last_context -= 1        #semantic-action
+            self.last_operation = last    #semantic-action
         
         elif self.get_current() == 'REPEAT':
             self.accept('REPEAT')
             self.bloco()
             self.accept('UNTIL')
+            self.last_context += 1         #semantic-action
+            last = self.last_operation     #semantic-action
+            self.last_operation = 'repeat' #semantic-action            
             self.exp()
             self.accept_token('PV')
+            self.last_context -= 1          #semantic-action
+            self.last_operation = last      #semantic-action
         
         elif self.get_current() == 'FOR':
             self.accept('FOR')
+            self.last_context += 1         #semantic-action
+            last = self.last_operation     #semantic-action
+            self.last_operation = 'for'    #semantic-action             
             self.accept_token('ID')
             self.accept_token('OP_ATR')
             self.exp_soma()
@@ -313,6 +411,8 @@ class Anasin:
             self.accept('DO')
             self.bloco()
             self.accept('NEXT')
+            self.last_context -= 1          #semantic-action
+            self.last_operation = last      #semantic-action
             
     def com_desvio(self):
         self.log(log ='com_desvio')
@@ -339,10 +439,15 @@ class Anasin:
         elif self.get_current() == 'SCANLN':
             self.accept('SCANLN')
 
+        last = self.last_operation #semantic-action
+        self.last_operation = 'leitura' #semantic-action
+
         self.accept('(')
         self.lista_var()
         self.accept(')')
         self.accept_token('PV')
+
+        self.last_operation = last #semantic-action
             
     def com_escrita(self):
         self.log(log ='com_escrita')
@@ -442,6 +547,8 @@ class Anasin:
         
         elif self.get_current_token() == 'ID':
             self.accept_token('ID')
+            self.symbol_table.use(self.tokens[self.counter -1][1]) #semantic-action
+
             if self.get_current() == '[':
                 self.var()
             elif self.get_current() == '(':
