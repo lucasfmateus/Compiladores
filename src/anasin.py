@@ -16,6 +16,9 @@ class Anasin:
         self.last_data_type = None
         self.last_operation = None
         self.stack = {}
+        self.stack_number = []
+        self.stack_operators = []
+        self.mepa = ''
 
     def add_symbol(self):
         """Add symbol to Symbol Table.
@@ -56,9 +59,17 @@ class Anasin:
         """ return lexemma """
         return self.tokens[self.counter][1]
 
+    def get_last(self):
+        """ return lexemma """
+        return self.tokens[self.counter-1][1]        
+
     def get_current_token(self):
         """ return token """
         return self.tokens[self.counter][0]
+
+    def get_last_token(self):
+        """ return token """
+        return self.tokens[self.counter-1][0]
 
     def log(self, token='', lexema='', log=''):
         self.output.write(f"{token},{lexema},{log}\n")
@@ -120,7 +131,10 @@ class Anasin:
         if self.get_current() == None:            
             self.remove_symbols('fim')
             print("Tabela de simbolos")
-            print(self.symbol_table.export())            
+            print(self.symbol_table.export())   
+
+            print('mepa')         
+            print(self.mepa)
             exit()
 
 
@@ -490,6 +504,7 @@ class Anasin:
         self.lista_exp()
         self.accept(')')
         self.accept_token('PV')
+        self.mepa += 'IMPR\n'
         
 
     def lista_exp(self):
@@ -519,10 +534,25 @@ class Anasin:
             self.op_relac()
             self.exp_soma()
 
+        # mepa
+        while len(self.stack_operators) > 0:
+            op = {
+                'OP_SUM': 'SOMA',
+                'OP_SUB': 'SUBT',
+                'OP_MULT': 'MULT',
+                'OP_DIV': 'DIVI'
+            }
+            for _ in range(2):
+                s = self.stack_number.pop(0)
+                self.mepa += f"CRCT {s}\n" if s != 'R' else ''
+            self.mepa += f"{op[self.stack_operators.pop(0)]}\n"
+            self.stack_number.insert(0, 'R')
+
     def op_relac(self):
         self.log(log ='op_relac')
         # op-relac => <= | < | > | >= | == | <>
         self.accept(['<=', '<', '>', '>=', '==', '<>'])
+        self.stack_operators.append(self.get_last_token())
 
     def exp_soma(self):
         self.log(log ='exp_soma')
@@ -541,6 +571,7 @@ class Anasin:
         self.log(log ='op_soma')
         # op-soma => + | - | OR
         self.accept_token(['OP_SUM', 'OP_SUB', 'OP_OR'])
+        self.stack_operators.append(self.get_last_token())
 
     def exp_mult(self):
         self.log(log ='exp_mult')
@@ -562,14 +593,18 @@ class Anasin:
 
         if self.get_current_token() in ['OP_MULT', 'OP_DIV', 'OP_AND']:
             self.accept_token(['OP_MULT', 'OP_DIV', 'OP_AND'])
+            self.stack_operators.append(self.get_last_token())
         
         self.accept(['MOD', 'DIV', 'AND'])
+        # AVALIAR!
+
 
     def exp_simples(self):
         self.log(log ='exp_simples')
         # exp-simples => ( exp ) | var | cham-func | literal | op-unario exp
         
         if self.get_current() == '(':
+            self.accept('(')
             self.exp()
             self.accept(')')
         
@@ -578,6 +613,7 @@ class Anasin:
             self.symbol_table.use(
                 id=self.tokens[self.counter -1][1],
                 context=self.last_context) #semantic-action
+            self.stack_number.append(self.get_last())
 
             if self.get_current() == '[':
                 self.var()
@@ -597,12 +633,14 @@ class Anasin:
 
         if self.get_current_token() in ['INT', 'FLOAT', 'CHAR', 'STRING']:
             self.accept_token(['INT', 'FLOAT', 'CHAR', 'STRING'])
+            self.stack_number.append(self.get_last())
         else:
             self.valor_verdade()
 
     def valor_verdade(self):
         self.log(log ='valor_verdade')
         self.accept(['TRUE', 'FALSE'])
+        self.stack_number.append(self.get_last())
 
     def args(self):
         self.log(log ='args')
@@ -632,8 +670,10 @@ class Anasin:
         #op-unario => + | - | NOT
         if self.get_current_token() in ['OP_INC', 'OP_SNC']:
             self.accept_token(['OP_INC', 'OP_SNC'])
+            self.stack_operators.append(self.get_last_token())
         else:
             self.accept('NOT')
+            self.stack_operators.append(self.get_last_token())
 
     
 

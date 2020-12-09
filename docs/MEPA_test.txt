@@ -1,0 +1,5 @@
+
+sub void main()
+    var int x;
+    print( "oi" );
+end-sub
