@@ -130,11 +130,17 @@ class Anasin:
 
         if self.get_current() == None:            
             self.remove_symbols('fim')
+            
+            print("\n-------------------")
             print("Tabela de simbolos")
+            print("-------------------")
             print(self.symbol_table.export())   
 
-            print('mepa')         
+            print("\n-------------------")
+            print('MEPA')         
+            print("-------------------")
             print(self.mepa)
+            
             exit()
 
 
@@ -380,11 +386,19 @@ class Anasin:
     def com_atrib(self):
         self.log(log ='com_atrib')
         self.accept_token('OP_ATR')
+        var_name = self.tokens[self.counter - 2][1]
         last = self.last_operation      #semantic-action
         self.last_operation = 'attrib'  #semantic-action
         self.exp()
         self.accept_token('PV')
         self.last_operation = last      #semantic-action
+        
+        try:
+            self.mepa += f"CRCT '{self.stack_number.pop(0)}'\n"
+        except:
+            pass
+
+            self.mepa += f"ARMZ {var_name}\n"        
 
     def com_selecao(self):
         self.log(log ='com_selecao')
@@ -504,7 +518,16 @@ class Anasin:
         self.lista_exp()
         self.accept(')')
         self.accept_token('PV')
-        self.mepa += 'IMPR\n'
+
+        printable = self.stack_number.pop(0)
+        if printable[0] == '$':
+            self.mepa += f"IMPR {printable}\n"
+        else:
+            for c in printable:
+                if c in ["'", '"']:
+                    continue
+
+                self.mepa += f'IMPR \'{c}\'\n'
         
 
     def lista_exp(self):
@@ -546,7 +569,7 @@ class Anasin:
                 s = self.stack_number.pop(0)
                 self.mepa += f"CRCT {s}\n" if s != 'R' else ''
             self.mepa += f"{op[self.stack_operators.pop(0)]}\n"
-            self.stack_number.insert(0, 'R')
+            #self.stack_number.insert(0, 'R')
 
     def op_relac(self):
         self.log(log ='op_relac')
@@ -613,7 +636,7 @@ class Anasin:
             self.symbol_table.use(
                 id=self.tokens[self.counter -1][1],
                 context=self.last_context) #semantic-action
-            self.stack_number.append(self.get_last())
+            self.stack_number.append(f"${self.get_last()}")
 
             if self.get_current() == '[':
                 self.var()
